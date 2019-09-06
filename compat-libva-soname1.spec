@@ -4,7 +4,7 @@
 #
 Name     : compat-libva-soname1
 Version  : 1.8.3
-Release  : 2
+Release  : 3
 URL      : https://github.com/intel/libva/archive/libva-1.8.3.tar.gz
 Source0  : https://github.com/intel/libva/archive/libva-1.8.3.tar.gz
 Summary  : Userspace Video Acceleration (VA) core interface
@@ -32,31 +32,13 @@ BuildRequires : pkgconfig(wayland-client)
 BuildRequires : pkgconfig(x11)
 BuildRequires : pkgconfig(xext)
 BuildRequires : pkgconfig(xfixes)
+# Suppress generation of debuginfo
+%global debug_package %{nil}
 
 %description
 [![Stories in Ready](https://badge.waffle.io/01org/libva.png?label=ready&title=Ready)](http://waffle.io/01org/libva)
 [![Build Status](https://travis-ci.org/01org/libva.svg?branch=master)](https://travis-ci.org/01org/libva)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/11605/badge.svg)](https://scan.coverity.com/projects/01org-libva)
-
-%package dev
-Summary: dev components for the compat-libva-soname1 package.
-Group: Development
-Requires: compat-libva-soname1-lib = %{version}-%{release}
-Provides: compat-libva-soname1-devel = %{version}-%{release}
-
-%description dev
-dev components for the compat-libva-soname1 package.
-
-
-%package dev32
-Summary: dev32 components for the compat-libva-soname1 package.
-Group: Default
-Requires: compat-libva-soname1-lib32 = %{version}-%{release}
-Requires: compat-libva-soname1-dev = %{version}-%{release}
-
-%description dev32
-dev32 components for the compat-libva-soname1 package.
-
 
 %package lib
 Summary: lib components for the compat-libva-soname1 package.
@@ -94,22 +76,30 @@ popd
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
-export LANG=C
-export SOURCE_DATE_EPOCH=1545409636
+export LANG=C.UTF-8
+export SOURCE_DATE_EPOCH=1567814101
+export GCC_IGNORE_WERROR=1
+export AR=gcc-ar
+export RANLIB=gcc-ranlib
+export NM=gcc-nm
+export CFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 "
+export FCFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 "
+export FFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 "
+export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=4 "
 %autogen --disable-static
 make  %{?_smp_mflags}
 
 pushd ../build32/
 export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
-export ASFLAGS="$ASFLAGS --32"
-export CFLAGS="$CFLAGS -m32"
-export CXXFLAGS="$CXXFLAGS -m32"
-export LDFLAGS="$LDFLAGS -m32"
+export ASFLAGS="${ASFLAGS}${ASFLAGS:+ }--32"
+export CFLAGS="${CFLAGS}${CFLAGS:+ }-m32 -mstackrealign"
+export CXXFLAGS="${CXXFLAGS}${CXXFLAGS:+ }-m32 -mstackrealign"
+export LDFLAGS="${LDFLAGS}${LDFLAGS:+ }-m32 -mstackrealign"
 %autogen --disable-static   --libdir=/usr/lib32 --build=i686-generic-linux-gnu --host=i686-generic-linux-gnu --target=i686-clr-linux-gnu
 make  %{?_smp_mflags}
 popd
 %check
-export LANG=C
+export LANG=C.UTF-8
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
@@ -118,7 +108,7 @@ cd ../build32;
 make VERBOSE=1 V=1 %{?_smp_mflags} check || :
 
 %install
-export SOURCE_DATE_EPOCH=1545409636
+export SOURCE_DATE_EPOCH=1567814101
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/compat-libva-soname1
 cp COPYING %{buildroot}/usr/share/package-licenses/compat-libva-soname1/COPYING
@@ -132,79 +122,74 @@ popd
 fi
 popd
 %make_install
+## Remove excluded files
+rm -f %{buildroot}/usr/include/va/va.h
+rm -f %{buildroot}/usr/include/va/va_backend.h
+rm -f %{buildroot}/usr/include/va/va_backend_egl.h
+rm -f %{buildroot}/usr/include/va/va_backend_glx.h
+rm -f %{buildroot}/usr/include/va/va_backend_tpi.h
+rm -f %{buildroot}/usr/include/va/va_backend_vpp.h
+rm -f %{buildroot}/usr/include/va/va_backend_wayland.h
+rm -f %{buildroot}/usr/include/va/va_compat.h
+rm -f %{buildroot}/usr/include/va/va_dec_hevc.h
+rm -f %{buildroot}/usr/include/va/va_dec_jpeg.h
+rm -f %{buildroot}/usr/include/va/va_dec_vp8.h
+rm -f %{buildroot}/usr/include/va/va_dec_vp9.h
+rm -f %{buildroot}/usr/include/va/va_dri2.h
+rm -f %{buildroot}/usr/include/va/va_dricommon.h
+rm -f %{buildroot}/usr/include/va/va_drm.h
+rm -f %{buildroot}/usr/include/va/va_drmcommon.h
+rm -f %{buildroot}/usr/include/va/va_egl.h
+rm -f %{buildroot}/usr/include/va/va_enc_h264.h
+rm -f %{buildroot}/usr/include/va/va_enc_hevc.h
+rm -f %{buildroot}/usr/include/va/va_enc_jpeg.h
+rm -f %{buildroot}/usr/include/va/va_enc_mpeg2.h
+rm -f %{buildroot}/usr/include/va/va_enc_vp8.h
+rm -f %{buildroot}/usr/include/va/va_enc_vp9.h
+rm -f %{buildroot}/usr/include/va/va_glx.h
+rm -f %{buildroot}/usr/include/va/va_tpi.h
+rm -f %{buildroot}/usr/include/va/va_version.h
+rm -f %{buildroot}/usr/include/va/va_vpp.h
+rm -f %{buildroot}/usr/include/va/va_wayland.h
+rm -f %{buildroot}/usr/include/va/va_x11.h
+rm -f %{buildroot}/usr/lib32/libva-drm.so
+rm -f %{buildroot}/usr/lib32/libva-egl.so
+rm -f %{buildroot}/usr/lib32/libva-glx.so
+rm -f %{buildroot}/usr/lib32/libva-tpi.so
+rm -f %{buildroot}/usr/lib32/libva-wayland.so
+rm -f %{buildroot}/usr/lib32/libva-x11.so
+rm -f %{buildroot}/usr/lib32/libva.so
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva-drm.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva-egl.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva-glx.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva-tpi.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva-wayland.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva-x11.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/32libva.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva-drm.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva-egl.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva-glx.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva-tpi.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva-wayland.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva-x11.pc
+rm -f %{buildroot}/usr/lib32/pkgconfig/libva.pc
+rm -f %{buildroot}/usr/lib64/libva-drm.so
+rm -f %{buildroot}/usr/lib64/libva-egl.so
+rm -f %{buildroot}/usr/lib64/libva-glx.so
+rm -f %{buildroot}/usr/lib64/libva-tpi.so
+rm -f %{buildroot}/usr/lib64/libva-wayland.so
+rm -f %{buildroot}/usr/lib64/libva-x11.so
+rm -f %{buildroot}/usr/lib64/libva.so
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva-drm.pc
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva-egl.pc
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva-glx.pc
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva-tpi.pc
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva-wayland.pc
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva-x11.pc
+rm -f %{buildroot}/usr/lib64/pkgconfig/libva.pc
 
 %files
 %defattr(-,root,root,-)
-
-%files dev
-%defattr(-,root,root,-)
-%exclude /usr/include/va/va.h
-%exclude /usr/include/va/va_backend.h
-%exclude /usr/include/va/va_backend_egl.h
-%exclude /usr/include/va/va_backend_glx.h
-%exclude /usr/include/va/va_backend_tpi.h
-%exclude /usr/include/va/va_backend_vpp.h
-%exclude /usr/include/va/va_backend_wayland.h
-%exclude /usr/include/va/va_compat.h
-%exclude /usr/include/va/va_dec_hevc.h
-%exclude /usr/include/va/va_dec_jpeg.h
-%exclude /usr/include/va/va_dec_vp8.h
-%exclude /usr/include/va/va_dec_vp9.h
-%exclude /usr/include/va/va_dri2.h
-%exclude /usr/include/va/va_dricommon.h
-%exclude /usr/include/va/va_drm.h
-%exclude /usr/include/va/va_drmcommon.h
-%exclude /usr/include/va/va_egl.h
-%exclude /usr/include/va/va_enc_h264.h
-%exclude /usr/include/va/va_enc_hevc.h
-%exclude /usr/include/va/va_enc_jpeg.h
-%exclude /usr/include/va/va_enc_mpeg2.h
-%exclude /usr/include/va/va_enc_vp8.h
-%exclude /usr/include/va/va_enc_vp9.h
-%exclude /usr/include/va/va_glx.h
-%exclude /usr/include/va/va_tpi.h
-%exclude /usr/include/va/va_version.h
-%exclude /usr/include/va/va_vpp.h
-%exclude /usr/include/va/va_wayland.h
-%exclude /usr/include/va/va_x11.h
-%exclude /usr/lib64/libva-drm.so
-%exclude /usr/lib64/libva-egl.so
-%exclude /usr/lib64/libva-glx.so
-%exclude /usr/lib64/libva-tpi.so
-%exclude /usr/lib64/libva-wayland.so
-%exclude /usr/lib64/libva-x11.so
-%exclude /usr/lib64/libva.so
-%exclude /usr/lib64/pkgconfig/libva-drm.pc
-%exclude /usr/lib64/pkgconfig/libva-egl.pc
-%exclude /usr/lib64/pkgconfig/libva-glx.pc
-%exclude /usr/lib64/pkgconfig/libva-tpi.pc
-%exclude /usr/lib64/pkgconfig/libva-wayland.pc
-%exclude /usr/lib64/pkgconfig/libva-x11.pc
-%exclude /usr/lib64/pkgconfig/libva.pc
-
-%files dev32
-%defattr(-,root,root,-)
-%exclude /usr/lib32/libva-drm.so
-%exclude /usr/lib32/libva-egl.so
-%exclude /usr/lib32/libva-glx.so
-%exclude /usr/lib32/libva-tpi.so
-%exclude /usr/lib32/libva-wayland.so
-%exclude /usr/lib32/libva-x11.so
-%exclude /usr/lib32/libva.so
-%exclude /usr/lib32/pkgconfig/32libva-drm.pc
-%exclude /usr/lib32/pkgconfig/32libva-egl.pc
-%exclude /usr/lib32/pkgconfig/32libva-glx.pc
-%exclude /usr/lib32/pkgconfig/32libva-tpi.pc
-%exclude /usr/lib32/pkgconfig/32libva-wayland.pc
-%exclude /usr/lib32/pkgconfig/32libva-x11.pc
-%exclude /usr/lib32/pkgconfig/32libva.pc
-%exclude /usr/lib32/pkgconfig/libva-drm.pc
-%exclude /usr/lib32/pkgconfig/libva-egl.pc
-%exclude /usr/lib32/pkgconfig/libva-glx.pc
-%exclude /usr/lib32/pkgconfig/libva-tpi.pc
-%exclude /usr/lib32/pkgconfig/libva-wayland.pc
-%exclude /usr/lib32/pkgconfig/libva-x11.pc
-%exclude /usr/lib32/pkgconfig/libva.pc
 
 %files lib
 %defattr(-,root,root,-)
@@ -242,4 +227,4 @@ popd
 
 %files license
 %defattr(0644,root,root,0755)
-%exclude /usr/share/package-licenses/compat-libva-soname1/COPYING
+/usr/share/package-licenses/compat-libva-soname1/COPYING
