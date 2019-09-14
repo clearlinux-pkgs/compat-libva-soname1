@@ -4,7 +4,7 @@
 #
 Name     : compat-libva-soname1
 Version  : 1.8.3
-Release  : 3
+Release  : 4
 URL      : https://github.com/intel/libva/archive/libva-1.8.3.tar.gz
 Source0  : https://github.com/intel/libva/archive/libva-1.8.3.tar.gz
 Summary  : Userspace Video Acceleration (VA) core interface
